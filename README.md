@@ -244,7 +244,7 @@ training:
     device: "cuda"  # Options: "cuda", "mps", "cpu"
 ```
 
-**Note**: The default configuration and hyperparameters are optimized for CUDA GPUs. When using MPS or CPU, you may need to adjust the following parameters for optimal performance:
+**Note**: The default configuration and hyperparameters are optimized for CUDA GPUs. When using MPS or CPU, you may need to install other torch versions or adjust the following parameters for optimal performance:
 
 - Reduce `batch_size` (e.g., 8-16 for MPS, 4-8 for CPU)
 - Reduce `gradient_accumulation_steps` for CPU training
