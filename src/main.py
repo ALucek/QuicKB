@@ -113,6 +113,7 @@ class TrainingArguments(BaseModel):
     
     # Required parameters
     output_path: str
+    device: Optional[str] = "cuda"
     
     # Basic training parameters
     epochs: Optional[int] = 4

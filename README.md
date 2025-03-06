@@ -30,6 +30,7 @@ Automatically create domain-specific training datasets:
 ### Embedding Optimization
 Fine-tune embedding models for your specific domain:
 - Custom training using [Sentence Transformers](https://sbert.net/)
+- Cross-platform training support (CUDA, MPS, CPU)
 - Dimension reduction techniques with Matryoshka Representation Learning
 - Comprehensive evaluation across multiple metrics
 - Detailed performance comparisons with baseline models
@@ -152,6 +153,7 @@ training:
   # Training hyperparameters
   training_arguments:
     output_path: "./output/modernbert_quickb"
+    device: "cuda" # Options: "cuda", "mps", "cpu"
     epochs: 4
     batch_size: 32
     gradient_accumulation_steps: 16
@@ -226,6 +228,31 @@ chunker_config:
     litellm_config: 
       embedding_model: "text-embedding-3-large"  # For similarity calculations
 ```
+### Device Support
+
+QuicKB supports multiple compute devices for model training:
+
+- **CUDA**: NVIDIA GPUs (default and recommended for best performance)
+- **MPS**: Apple Silicon GPUs on macOS
+- **CPU**: Available on all systems, but significantly slower for training
+
+To specify your preferred device, use the `device` parameter in your training configuration:
+
+```yaml
+training:
+  training_arguments:
+    device: "cuda"  # Options: "cuda", "mps", "cpu"
+```
+
+**Note**: The default configuration and hyperparameters are optimized for CUDA GPUs. When using MPS or CPU, you may need to adjust the following parameters for optimal performance:
+
+- Reduce `batch_size` (e.g., 8-16 for MPS, 4-8 for CPU)
+- Reduce `gradient_accumulation_steps` for CPU training
+- Set `bf16: false` and `tf32: false` for CPU training
+- Use other optimizers like `adamw_torch`
+- Consider using smaller base models
+
+Device selection is automatic if you don't specify a device (prioritizing CUDA > MPS > CPU), but explicit configuration is recommended for reproducibility.
 
 ### LiteLLM Integration
 
@@ -375,7 +402,6 @@ Todo List:
 - Cleaner handling of config arguments and validation at pipeline stages
 - pydantic v2 fields warning
 - Custom Model Card (Using base from SBERT currently)
-- CPU training support
 
 ## License
 

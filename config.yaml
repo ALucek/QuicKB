@@ -89,6 +89,7 @@ training:
   # Training hyperparameters
   training_arguments:
     output_path: "./output/modernbert_quickb"
+    device: "cuda" # Options: "cuda", "mps", "cpu"
     epochs: 4
     batch_size: 32
     gradient_accumulation_steps: 16

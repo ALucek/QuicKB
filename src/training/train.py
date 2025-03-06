@@ -4,7 +4,7 @@ import logging
 import torch
 import yaml
 from pathlib import Path
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datasets import load_dataset, Dataset
 from sentence_transformers import (
     SentenceTransformer,
@@ -221,6 +221,32 @@ def save_metrics_to_file(before: dict, after: dict, dim_list: list, path="metric
         write_table(f, "Absolute Changes (Δ)", headers, delta_rows, num_formatter)
         write_table(f, "Percentage Changes", headers, pct_change_rows, num_formatter)
 
+def select_device(preferred_device: Optional[str] = None) -> str:
+    # Handle explicit preference first
+    if preferred_device:
+        if preferred_device == "cuda" and torch.cuda.is_available():
+            logger.info("Using CUDA GPU as requested")
+            return "cuda"
+        elif preferred_device == "mps" and hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+            logger.info("Using Apple Silicon MPS as requested")
+            return "mps"
+        elif preferred_device == "cpu":
+            logger.info("Using CPU as requested")
+            return "cpu"
+        else:
+            logger.warning(f"Requested device '{preferred_device}' not available, falling back to auto-detection")
+    
+    # Auto-detection (prioritize GPU > MPS > CPU)
+    if torch.cuda.is_available():
+        logger.info("CUDA GPU detected and selected")
+        return "cuda"
+    elif hasattr(torch.backends, "mps") and torch.backends.mps.is_available():
+        logger.info("Apple Silicon MPS detected and selected")
+        return "mps"
+    else:
+        logger.info("No accelerator detected, using CPU")
+        return "cpu"
+
 def main(config, train_dataset: List[Dict[str, Any]], kb_dataset: List[Dict[str, Any]]):
     """Main training function."""
     if not hasattr(config, 'training') or not config.training:
@@ -269,7 +295,7 @@ def main(config, train_dataset: List[Dict[str, Any]], kb_dataset: List[Dict[str,
     evaluator = SequentialEvaluator(evaluators)
 
     # Initialize base model and run baseline evaluation
-    device = "cuda" if torch.cuda.is_available() else "cpu"
+    device = select_device(config.training.training_arguments.device)
     base_model = SentenceTransformer(config.training.model_settings.model_id, device=device, trust_remote_code=config.training.model_settings.trust_remote_code)
     base_model.max_seq_length = config.training.model_settings.max_seq_length
     baseline_results = run_baseline_eval(base_model, evaluator, dim_list)
