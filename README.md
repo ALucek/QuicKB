@@ -233,7 +233,7 @@ chunker_config:
 QuicKB supports multiple compute devices for model training:
 
 - **CUDA**: NVIDIA GPUs (default and recommended for best performance)
-- **MPS**: Apple Silicon GPUs on macOS
+- **MPS**: Apple Silicon on macOS
 - **CPU**: Available on all systems, but significantly slower for training
 
 To specify your preferred device, use the `device` parameter in your training configuration:
