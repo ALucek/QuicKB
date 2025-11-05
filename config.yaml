@@ -50,9 +50,9 @@ question_generation:
     # knowledgebase_dataset_id: "AdamLucek/quickb-kb"
 
   # Performance settings
-  max_workers: 150                    # Parallel question generation
-  llm_calls_per_minute: null          # null = no limit
-  embedding_calls_per_minute: null    # null = no limit
+  max_workers: 10                    # Parallel question generation
+  llm_calls_per_minute: 60          # null = no limit
+  embedding_calls_per_minute: 60    # null = no limit
 
   # Question deduplication
   deduplication_enabled: True

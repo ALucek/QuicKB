@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import logging
+import os
 import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
@@ -81,8 +82,17 @@ def _push_chunks_to_hub(config: PipelineConfig) -> None:
     if not chunker_cfg:
         return
 
+    if not config.hub_username:
+        logger.warning("Skipping chunk upload: no Hugging Face username configured.")
+        return
+
+    token = config.hub_token or os.getenv("HF_TOKEN")
+    if not token:
+        logger.warning("Skipping chunk upload: no Hugging Face token available.")
+        return
+
     try:
-        pusher = DatasetPusher(username=config.hub_username, token=config.hub_token)
+        pusher = DatasetPusher(username=config.hub_username, token=token)
 
         repository_id = (
             chunker_cfg.upload_config.hub_dataset_id
@@ -145,15 +155,10 @@ def generate_questions(
     unique_texts = list(text_to_chunk_map.keys())
     logger.info("Found %d unique chunks", len(unique_texts))
 
-    questions = generator.generate_for_chunks(unique_texts)
-    logger.info("Generated %d questions after deduplication", len(questions))
-
-    metrics = {
-        "num_questions_original": sum(
-            len(generator._question_cache[chunk]) for chunk in generator._question_cache
-        ),
-        "num_questions_deduped": len(questions),
-    }
+    questions, metrics = generator.generate_for_chunks(unique_texts)
+    logger.info(
+        "Generated %d questions after deduplication", metrics["num_questions_deduped"]
+    )
     logger.info("Question generation metrics: %s", metrics)
 
     train_records: List[Dict[str, Any]] = []
@@ -215,8 +220,17 @@ def _push_questions_to_hub(config: PipelineConfig, metrics: Dict[str, int]) -> N
     if not question_cfg:
         return
 
+    if not config.hub_username:
+        logger.warning("Skipping question dataset upload: no Hugging Face username configured.")
+        return
+
+    token = config.hub_token or os.getenv("HF_TOKEN")
+    if not token:
+        logger.warning("Skipping question dataset upload: no Hugging Face token available.")
+        return
+
     try:
-        pusher = DatasetPusher(username=config.hub_username, token=config.hub_token)
+        pusher = DatasetPusher(username=config.hub_username, token=token)
 
         repository_id = question_cfg.upload_config.hub_dataset_id
 
@@ -246,6 +260,3 @@ def train_model(
     """Train the embedding model."""
 
     train_main(config, train_dataset=train_dataset, kb_dataset=kb_dataset)
-
-
-

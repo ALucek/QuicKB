@@ -118,9 +118,9 @@ question_generation:
     # knowledgebase_dataset_id: "username/quickb-kb"
 
   # Performance settings
-  max_workers: 150                    # Parallel question generation
-  llm_calls_per_minute: null          # null = no limit
-  embedding_calls_per_minute: null    # null = no limit
+  max_workers: 10                    # Parallel question generation
+  llm_calls_per_minute: 60          # null = no limit
+  embedding_calls_per_minute: 60    # null = no limit
 
   # Question deduplication
   deduplication_enabled: True
@@ -407,6 +407,7 @@ Todo List:
 - Cleaner handling of config arguments and validation at pipeline stages
 - pydantic v2 fields warning
 - Custom Model Card (Using base from SBERT currently)
+- Stream chunking output to avoid buffering entire corpora in memory
 
 ## License
 

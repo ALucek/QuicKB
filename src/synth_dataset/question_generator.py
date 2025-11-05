@@ -1,5 +1,5 @@
 from threading import Lock, RLock
-from typing import Dict, List, Optional
+from typing import Dict, List, Optional, Tuple
 import json
 import uuid
 import logging
@@ -164,16 +164,18 @@ class QuestionGenerator:
             response = embedding(**embedding_kwargs)
             return [data["embedding"] for data in response.data]
 
-    def generate_for_chunks(self, chunks: List[str]) -> List[Dict]:
+    def generate_for_chunks(self, chunks: List[str]) -> Tuple[List[Dict], Dict[str, int]]:
         """Generate questions for multiple chunks with thread safety."""
-        results = []
-        uncached_chunks = []
+        results: List[Dict] = []
+        uncached_chunks: List[str] = []
+        original_question_count = 0
 
         # Check cache first
         for chunk in chunks:
             cached_results = self._get_from_cache(chunk)
             if cached_results is not None:
                 results.extend(cached_results)
+                original_question_count += len(cached_results)
             else:
                 uncached_chunks.append(chunk)
 
@@ -188,12 +190,14 @@ class QuestionGenerator:
                     for future in as_completed(future_to_chunk):
                         try:
                             questions = future.result()
+                            original_question_count += len(questions)
                             results.extend(questions)
                         except Exception as e:
                             chunk = future_to_chunk[future]
                             logger.error(f"Error processing chunk {chunk[:50]}...: {str(e)}")
                         pbar.update(1)
         
+        deduped_results = results
         if self.dedup_enabled and self.deduplicator and results:
             # Process embeddings in batches
             questions_text = [q["question"] for q in results]
@@ -219,10 +223,19 @@ class QuestionGenerator:
                         
                     except Exception as e:
                         logger.error(f"Error during embedding batch {i//self.embedding_batch_size}: {str(e)}")
-                        return results  # Return un-deduplicated results on error
+                        metrics = {
+                            "num_questions_original": original_question_count,
+                            "num_questions_deduped": len(results),
+                        }
+                        return results, metrics  # Return un-deduplicated results on error
             
             # Deduplicate with thread safety
             with self._cache_lock:
-                results = self.deduplicator.deduplicate(results, all_embeddings)
-        
-        return results
+                deduped_results = self.deduplicator.deduplicate(results, all_embeddings)
+
+        metrics = {
+            "num_questions_original": original_question_count,
+            "num_questions_deduped": len(deduped_results),
+        }
+
+        return deduped_results, metrics
