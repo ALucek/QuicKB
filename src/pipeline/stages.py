@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Tuple
 
 from chunking import ChunkerRegistry
 from hub_upload.dataset_pusher import DatasetPusher
+from prompts.question_generation import QUESTION_GENERATION_PROMPT
 from synth_dataset.question_generator import QuestionGenerator
 from training.train import main as train_main
 
@@ -122,7 +123,7 @@ def generate_questions(
     litellm_config = question_cfg.litellm_config
 
     generator = QuestionGenerator(
-        prompt_path="src/prompts/question_generation.txt",
+        prompt=QUESTION_GENERATION_PROMPT,
         llm_model=litellm_config.model,
         embedding_model=litellm_config.embedding_model,
         dedup_enabled=question_cfg.deduplication_enabled,

@@ -15,8 +15,9 @@ logging.getLogger("LiteLLM").setLevel(logging.WARNING)
 
 class QuestionGenerator:
     def __init__(
-        self, 
-        prompt_path: str, 
+        self,
+        prompt_path: Optional[str] = None,
+        prompt: Optional[str] = None,
         api_key: str = None,
         llm_model: str = "openai/gpt-4o-mini",
         embedding_model: str = "text-embedding-3-large",
@@ -31,10 +32,19 @@ class QuestionGenerator:
         temperature: Optional[float] = None
     ):
         # Initialize basic attributes
+        if prompt is not None and prompt_path is not None:
+            raise ValueError("Provide either 'prompt' or 'prompt_path', not both.")
+
+        if prompt is not None:
+            self.prompt = prompt
+        else:
+            if prompt_path is None:
+                raise ValueError("Either 'prompt' or 'prompt_path' must be provided.")
+            self.prompt = self._load_prompt(prompt_path)
+
         self.api_key = api_key
         self.llm_model = llm_model
         self.embedding_model = embedding_model
-        self.prompt = self._load_prompt(prompt_path)
         self.dedup_enabled = dedup_enabled
         self.max_workers = max_workers
         self.model_api_base = model_api_base
