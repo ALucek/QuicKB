@@ -1,7 +1,7 @@
 [project]
 name = "quickb"
 version = "0.1.0"
-description = "Add your description here"
+description = "Fine tuned embedding model + knowledge base pipeline"
 readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
