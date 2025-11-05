@@ -78,7 +78,7 @@ class ChunkerConfig(BaseModel):
     @property
     def litellm_config(self) -> Optional[LiteLLMConfig]:
         """Extract ModelConfig from chunker_arguments if present."""
-        if "model_config" in self.chunker_arguments:
+        if "litellm_config" in self.chunker_arguments:
             return LiteLLMConfig.model_validate(self.chunker_arguments["litellm_config"])
         return None
 
@@ -296,15 +296,20 @@ def generate_questions(
     if not config.question_generation:
         raise ValueError("Question generation config is required but not provided")
     
+    if not config.question_generation.litellm_config:
+        raise ValueError("Question generation requires 'litellm_config' settings.")
+
+    litellm_config = config.question_generation.litellm_config
+
     generator = QuestionGenerator(
         prompt_path="src/prompts/question_generation.txt",
-        llm_model=config.question_generation.litellm_config.model,
-        embedding_model=config.question_generation.litellm_config.embedding_model,
+        llm_model=litellm_config.model,
+        embedding_model=litellm_config.embedding_model,
         dedup_enabled=config.question_generation.deduplication_enabled,
         similarity_threshold=config.question_generation.similarity_threshold,
         max_workers=config.question_generation.max_workers,
-        model_api_base=config.question_generation.litellm_config.model_api_base,
-        embedding_api_base=config.question_generation.litellm_config.embedding_api_base,
+        model_api_base=litellm_config.model_api_base,
+        embedding_api_base=litellm_config.embedding_api_base,
         embedding_batch_size=config.question_generation.dedup_embedding_batch_size,
         llm_calls_per_minute=config.question_generation.llm_calls_per_minute,
         embedding_calls_per_minute=config.question_generation.embedding_calls_per_minute
@@ -473,7 +478,7 @@ def run_pipeline(config: PipelineConfig):
     # 2. GENERATE
     if from_stage.value <= PipelineStage.GENERATE.value <= to_stage.value:
         # Load knowledgebase dataset if needed for GENERATE
-        if not kb_dataset:
+        if kb_dataset is None:
             input_config = config.question_generation.input_dataset_config
             if input_config.dataset_source == "hub":
                 logger.info(f"Loading knowledgebase dataset from Hub: {input_config.knowledgebase_dataset_id}")
@@ -497,19 +502,19 @@ def run_pipeline(config: PipelineConfig):
         # Load datasets for training if needed
         if train_config.dataset_source == "hub":
             logger.info("Loading datasets from Hub for training...")
-            if not train_dataset:
+            if train_dataset is None:
                 logger.info(f"Loading training dataset from Hub: {train_config.train_dataset_id}")
                 train_dataset = load_dataset_from_hub(train_config.train_dataset_id)
-            if not kb_dataset:
+            if kb_dataset is None:
                 logger.info(f"Loading knowledgebase dataset from Hub: {train_config.knowledgebase_dataset_id}")
                 kb_dataset = load_dataset_from_hub(train_config.knowledgebase_dataset_id)
         else:  # local
             logger.info("Loading datasets from local files for training...")
-            if not train_dataset:
+            if train_dataset is None:
                 train_path = train_config.local_train_path or config.question_generation.output_path
                 logger.info(f"Loading training dataset from local path: {train_path}")
                 train_dataset = load_dataset_from_local(train_path)
-            if not kb_dataset:
+            if kb_dataset is None:
                 kb_path = train_config.local_knowledgebase_path or config.chunker_config.output_path
                 logger.info(f"Loading knowledgebase dataset from local path: {kb_path}")
                 kb_dataset = load_dataset_from_local(kb_path)
