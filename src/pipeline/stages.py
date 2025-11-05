@@ -4,8 +4,9 @@ import json
 import logging
 import os
 import uuid
+from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Iterator, List, Tuple
 
 from chunking.registry import ChunkerRegistry
 from hub_upload.dataset_pusher import DatasetPusher
@@ -18,8 +19,21 @@ from .config import PipelineConfig
 logger = logging.getLogger(__name__)
 
 
-def process_chunks(config: PipelineConfig) -> List[Dict[str, Any]]:
-    """Process documents into chunks and optionally upload to the Hub."""
+@dataclass
+class ChunkGenerationResult:
+    """Represents chunked knowledgebase stored on disk with streaming access."""
+
+    output_path: Path
+    total_chunks: int
+
+    def iter_chunks(self) -> Iterator[Dict[str, Any]]:
+        """Yield chunks from disk one at a time without loading entire file."""
+
+        yield from _stream_chunks_from_disk(self.output_path)
+
+
+def process_chunks(config: PipelineConfig) -> ChunkGenerationResult:
+    """Process documents into chunks, stream them to disk, and optionally upload."""
 
     if not config.chunker_config:
         raise ValueError("Chunker config must be provided to process chunks")
@@ -31,41 +45,54 @@ def process_chunks(config: PipelineConfig) -> List[Dict[str, Any]]:
     logger.info("Initialized Chunker: %s", chunker_cfg.chunker)
 
     base_path = Path(config.path_to_knowledgebase)
-    results: List[Dict[str, Any]] = []
     total_chunks = 0
-
-    for file_path in base_path.rglob("*.txt"):
-        try:
-            with open(file_path, "r", encoding="utf-8") as file:
-                text = file.read()
-        except Exception as exc:
-            logger.error("Error reading %s: %s", file_path, exc)
-            continue
-
-        try:
-            chunks = chunker.split_text(text)
-        except Exception as exc:
-            logger.error("Error chunking %s: %s", file_path, exc)
-            continue
-
-        source_path = str(file_path.relative_to(base_path))
-        for chunk in chunks:
-            results.append({
-                "id": str(uuid.uuid4()),
-                "text": chunk,
-                "source": source_path,
-            })
-
-        logger.info("Created %d chunks from %s", len(chunks), file_path)
-        total_chunks += len(chunks)
-
-    logger.info("Created %d chunks in total", total_chunks)
 
     output_path = Path(chunker_cfg.output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    with open(output_path, "w", encoding="utf-8") as file:
-        json.dump(results, file, indent=2, ensure_ascii=False)
+    with open(output_path, "w", encoding="utf-8") as handle:
+        handle.write("[\n")
+        first_record = True
+
+        for file_path in base_path.rglob("*.txt"):
+            try:
+                with open(file_path, "r", encoding="utf-8") as reader:
+                    text = reader.read()
+            except Exception as exc:
+                logger.error("Error reading %s: %s", file_path, exc)
+                continue
+
+            try:
+                chunks = chunker.split_text(text)
+            except Exception as exc:
+                logger.error("Error chunking %s: %s", file_path, exc)
+                continue
+
+            source_path = str(file_path.relative_to(base_path))
+
+            for chunk_text in chunks:
+                record = {
+                    "id": str(uuid.uuid4()),
+                    "text": chunk_text,
+                    "source": source_path,
+                }
+
+                if not first_record:
+                    handle.write(",\n")
+                else:
+                    first_record = False
+
+                handle.write("  ")
+                handle.write(json.dumps(record, ensure_ascii=False))
+                total_chunks += 1
+
+            logger.info("Created %d chunks from %s", len(chunks), file_path)
+
+        if not first_record:
+            handle.write("\n")
+        handle.write("]\n")
+
+    logger.info("Created %d chunks in total", total_chunks)
 
     if (
         config.hub_username
@@ -74,7 +101,29 @@ def process_chunks(config: PipelineConfig) -> List[Dict[str, Any]]:
     ):
         _push_chunks_to_hub(config)
 
-    return results
+    return ChunkGenerationResult(output_path=output_path, total_chunks=total_chunks)
+
+
+def _stream_chunks_from_disk(path: Path) -> Iterator[Dict[str, Any]]:
+    """Stream chunk records from a JSON array file on disk."""
+
+    if not path.exists():
+        logger.warning("Chunk output path %s does not exist for streaming", path)
+        return iter(())
+
+    def iterator() -> Iterator[Dict[str, Any]]:
+        with open(path, "r", encoding="utf-8") as handle:
+            for line in handle:
+                stripped = line.strip()
+                if not stripped or stripped in {"[", "]"}:
+                    continue
+                if stripped.endswith(","):
+                    stripped = stripped[:-1]
+                if not stripped:
+                    continue
+                yield json.loads(stripped)
+
+    return iterator()
 
 
 def _push_chunks_to_hub(config: PipelineConfig) -> None:
