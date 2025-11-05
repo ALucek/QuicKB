@@ -52,6 +52,13 @@ uv sync
 ```bash
 uv run src/main.py
 ```
+   
+To use a different configuration file, pass the path explicitly:
+
+```bash
+uv run src/main.py --config path/to/custom-config.yaml
+```
+
 4. Enjoy!
 
 ## Configuration Guide

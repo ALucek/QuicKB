@@ -11,3 +11,4 @@ output/
 .env
 .pyc
 .venv/
+config-testing.yaml

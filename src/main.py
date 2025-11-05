@@ -1,3 +1,4 @@
+import argparse
 import logging
 import json
 import uuid
@@ -6,8 +7,8 @@ from pathlib import Path
 from typing import List, Dict, Optional, Any, Literal
 
 import yaml
-from pydantic import BaseModel, ConfigDict, field_validator
-from datasets import load_dataset, Dataset
+from pydantic import BaseModel, ConfigDict
+from datasets import load_dataset
 
 from chunking import ChunkerRegistry
 from hub_upload.dataset_pusher import DatasetPusher
@@ -527,10 +528,23 @@ def run_pipeline(config: PipelineConfig):
 
     logger.info("Pipeline complete!")
 
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Run the QuicKB pipeline.")
+    parser.add_argument(
+        "-c",
+        "--config",
+        default="config.yaml",
+        help="Path to the pipeline configuration file. Defaults to 'config.yaml' in the current working directory.",
+    )
+    return parser.parse_args()
+
+
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO)
     try:
-        config = load_pipeline_config("config.yaml")
+        args = parse_args()
+        config = load_pipeline_config(args.config)
         run_pipeline(config)
     except Exception as e:
         logger.error(f"Fatal error: {str(e)}")
