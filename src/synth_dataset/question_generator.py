@@ -1,7 +1,5 @@
-import threading
 from threading import Lock, RLock
 from typing import Dict, List, Optional
-from collections import deque
 import json
 import uuid
 import logging

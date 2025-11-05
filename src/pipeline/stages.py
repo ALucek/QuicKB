@@ -4,7 +4,7 @@ import json
 import logging
 import uuid
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Tuple
 
 from chunking import ChunkerRegistry
 from hub_upload.dataset_pusher import DatasetPusher

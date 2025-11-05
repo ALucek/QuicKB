@@ -14,17 +14,13 @@ from typing import (
     List,
     Literal,
     Optional,
-    Type,
-    TypeVar,
     Union,
 )
 from .base_chunker import BaseChunker
 from attr import dataclass
-from .registry import ChunkerRegistry 
+from .registry import ChunkerRegistry
 
 logger = logging.getLogger(__name__)
-
-TS = TypeVar("TS", bound="TextSplitter")
 
 class TextSplitter(BaseChunker, ABC):
     """Interface for splitting text into chunks."""

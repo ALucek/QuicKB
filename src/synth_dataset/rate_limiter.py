@@ -1,11 +1,9 @@
 from threading import Lock
-from time import time, sleep
+from time import sleep, time
 from collections import deque
 import logging
 
 logger = logging.getLogger(__name__)
-
-from typing import Optional
 
 class RateLimiter:
     """Thread-safe rate limiter using a rolling window."""

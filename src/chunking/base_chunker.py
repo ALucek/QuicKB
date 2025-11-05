@@ -1,5 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import List, Any
+from typing import List
+
 from .utils import get_length_function
 
 class BaseChunker(ABC):

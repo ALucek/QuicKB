@@ -1,34 +1,23 @@
 import os
-import json
 import logging
+from typing import Any, Dict, List, Optional
+
 import torch
-import yaml
-from pathlib import Path
-from typing import Dict, List, Any, Optional
-from datasets import load_dataset, Dataset
+from datasets import Dataset
 from sentence_transformers import (
     SentenceTransformer,
     SentenceTransformerModelCardData,
-    SentenceTransformerTrainingArguments,
     SentenceTransformerTrainer,
+    SentenceTransformerTrainingArguments,
 )
 from sentence_transformers.losses import MultipleNegativesRankingLoss, MatryoshkaLoss
 from sentence_transformers.evaluation import InformationRetrievalEvaluator, SequentialEvaluator
 from sentence_transformers.util import cos_sim
-from sentence_transformers.training_args import BatchSamplers
-from huggingface_hub import login
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
 logging.getLogger("transformers").setLevel(logging.WARNING)
-
-def load_main_config(config_path_or_obj):
-    """Load configuration from path or use provided config object."""
-    if isinstance(config_path_or_obj, (str, bytes, os.PathLike)):
-        with open(config_path_or_obj, "r", encoding="utf-8") as f:
-            return yaml.safe_load(f)
-    return config_path_or_obj.model_dump()
 
 def validate_dataset_consistency(kb_dataset: List[Dict[str, Any]], train_dataset: List[Dict[str, Any]]) -> bool:
     """Validate that all chunk IDs referenced in training data exist in knowledgebase."""
@@ -214,7 +203,8 @@ def save_metrics_to_file(before: dict, after: dict, dim_list: list, path="metric
 
         # Write tables
         headers = ["Metric"] + dim_strs
-        num_formatter = lambda val, w: f"{val:>{w}}"
+        def num_formatter(val, width):
+            return f"{val:>{width}}"
         
         write_table(f, "Baseline Performance", headers, baseline_rows, num_formatter)
         write_table(f, "Fine-Tuned Performance", headers, finetuned_rows, num_formatter)

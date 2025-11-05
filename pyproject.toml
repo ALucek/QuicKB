@@ -18,3 +18,8 @@ dependencies = [
     "tqdm==4.67.1",
     "transformers==4.48.1",
 ]
+
+[tool.uv]
+dev-dependencies = [
+    "ruff>=0.14.3",
+]

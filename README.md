@@ -88,13 +88,13 @@ chunker_config:
     chunk_overlap: 0
     length_type: "character"
     separators: ["\n\n", "\n", ".", "?", "!", " ", ""]
-    keep_separator: true
-    is_separator_regex: false
+    keep_separator: True
+    is_separator_regex: False
   
   # Optional: Push chunks to Hugging Face Hub
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_dataset_id: "AdamLucek/quickb-kb"
 
 # ========== Question Generation ==========
@@ -123,14 +123,14 @@ question_generation:
   embedding_calls_per_minute: null    # null = no limit
 
   # Question deduplication
-  deduplication_enabled: true
+  deduplication_enabled: True
   dedup_embedding_batch_size: 2048    # Batch size for embedding calculation
   similarity_threshold: 0.85          # Semantic Similarity Threshold
 
   # Optional: Push training data to Hub
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_dataset_id: "AdamLucek/quickb-qa"
 
 # ========== Model Training ==========
@@ -144,7 +144,7 @@ training:
     matryoshka_dimensions: [768, 512, 256, 128, 64]
     metric_for_best_model: "eval_dim_128_cosine_ndcg@10"
     max_seq_length: 1024
-    trust_remote_code: false
+    trust_remote_code: False
 
   # Training data configuration
   train_dataset_config:
@@ -166,20 +166,20 @@ training:
     warmup_ratio: 0.1
     lr_scheduler_type: "cosine"
     optim: "adamw_torch_fused"
-    tf32: true
-    bf16: true
+    tf32: True
+    bf16: True
     batch_sampler: "no_duplicates"  # Options: "batch_sampler", "no_duplicates", "group_by_label"
     eval_strategy: "epoch"
     save_strategy: "epoch"
     logging_steps: 10
     save_total_limit: 3
-    load_best_model_at_end: true
+    load_best_model_at_end: True
     report_to: "none"
 
   # Optional: Push trained model to Hub
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_model_id: "AdamLucek/modernbert-embed-quickb"
 ```
 
@@ -253,7 +253,7 @@ training:
 
 - Reduce `batch_size` (e.g., 8-16 for MPS, 4-8 for CPU)
 - Reduce `gradient_accumulation_steps` for CPU training
-- Set `bf16: false` and `tf32: false` for CPU training
+- Set `bf16: False` and `tf32: False` for CPU training
 - Use other optimizers like `adamw_torch`
 - Consider using smaller base models
 
@@ -313,8 +313,8 @@ The Hub integration is configured through `upload_config` sections and dataset s
 # Example Hub configuration for chunking
 chunker_config:
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_dataset_id: "username/quickb-kb"
 
 # Loading data from Hub for question generation
@@ -324,8 +324,8 @@ question_generation:
     knowledgebase_dataset_id: "username/quickb-kb"
   
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_dataset_id: "username/quickb-qa"
 
 # Loading from Hub for training
@@ -336,8 +336,8 @@ training:
     knowledgebase_dataset_id: "username/quickb-kb"
   
   upload_config:
-    push_to_hub: true
-    hub_private: false
+    push_to_hub: True
+    hub_private: False
     hub_model_id: "username/modernbert-embed-quickb"
 ```
 **Authentication**

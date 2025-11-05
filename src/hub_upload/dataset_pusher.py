@@ -1,8 +1,7 @@
 import json
 import logging
 import os
-from pathlib import Path
-from typing import Optional, Dict, Any
+from typing import Any, Dict, Optional
 from datasets import Dataset
 from huggingface_hub import create_repo, upload_file, repo_exists
 from .card_generator import DatasetCardGenerator
