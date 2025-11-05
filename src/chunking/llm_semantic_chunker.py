@@ -61,13 +61,21 @@ class LLMSemanticChunker(BaseChunker):
     def _get_llm_response(self, context: str, current: int) -> str:
         """Get chunking suggestions from LLM using LiteLLM."""
         try:
-            response = completion(
-                model=self._litellm_config.get('model', 'openai/gpt-4o'),
-                messages=self.get_prompt(context, current),
-                temperature=0.2,
-                max_tokens=200,
-                api_base=self._litellm_config.get('model_api_base')
-            )
+            completion_kwargs = {
+                "model": self._litellm_config.get('model', 'openai/gpt-4o'),
+                "messages": self.get_prompt(context, current),
+                "max_tokens": 200,
+            }
+
+            api_base = self._litellm_config.get('model_api_base')
+            if api_base:
+                completion_kwargs["api_base"] = api_base
+
+            temperature = self._litellm_config.get('temperature')
+            if temperature is not None:
+                completion_kwargs["temperature"] = temperature
+
+            response = completion(**completion_kwargs)
             return response.choices[0].message.content
         except Exception as e:
             print(f"LLM API error: {str(e)}")

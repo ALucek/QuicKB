@@ -10,3 +10,4 @@ output/
 *.egg-info/
 .env
 .pyc
+.venv/

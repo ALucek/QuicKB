@@ -29,7 +29,8 @@ class QuestionGenerator:
         embedding_api_base: str = None,
         embedding_batch_size: int = 500,
         llm_calls_per_minute: int = 15,
-        embedding_calls_per_minute: int = 15
+        embedding_calls_per_minute: int = 15,
+        temperature: Optional[float] = None
     ):
         # Initialize basic attributes
         self.api_key = api_key
@@ -41,6 +42,7 @@ class QuestionGenerator:
         self.model_api_base = model_api_base
         self.embedding_api_base = embedding_api_base
         self.embedding_batch_size = embedding_batch_size
+        self.temperature = temperature
 
         # Thread safety mechanisms
         self._question_cache: Dict[str, List[Dict]] = {}
@@ -94,11 +96,13 @@ class QuestionGenerator:
                 {"role": "system", "content": self.prompt},
                 {"role": "user", "content": f"Text: {chunk}"}
             ],
-            "temperature": 0.7,
             "api_key": self.api_key,
             "timeout": 10  # Add timeout for API calls
         }
         
+        if self.temperature is not None:
+            completion_kwargs["temperature"] = self.temperature
+
         if self.model_api_base:
             completion_kwargs["api_base"] = self.model_api_base
             

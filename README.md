@@ -41,10 +41,7 @@ Fine-tune embedding models for your specific domain:
 git clone https://github.com/ALucek/QuicKB.git
 cd QuicKB
 
-python -m venv quickb-env
-source quickb-env/bin/activate  # Windows: quickb-env\Scripts\activate
-
-pip install -e .
+uv sync
 ```
 
 ## Usage
@@ -53,7 +50,7 @@ pip install -e .
 2. Configure the pipeline in `config.yaml`
 3. Run:
 ```bash
-python src/main.py
+uv run src/main.py
 ```
 4. Enjoy!
 
@@ -101,6 +98,7 @@ question_generation:
   litellm_config:
     model: "openai/gpt-4o-mini"
     model_api_base: null     # Optional: Custom API endpoint
+    temperature: 1.0         # Optional: omit or adjust based on model support
 
     embedding_model: "text-embedding-3-large"
     embedding_api_base: null # Optional: Custom embedding endpoint

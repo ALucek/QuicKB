@@ -1,5 +1,4 @@
 import logging
-import os
 import json
 import uuid
 from enum import Enum, auto
@@ -38,6 +37,7 @@ class LiteLLMConfig(BaseModel):
     model_api_base: Optional[str] = None
     embedding_model: Optional[str] = "openai/text-embedding-3-large"
     embedding_api_base: Optional[str] = None
+    temperature: Optional[float] = None
 
 class QuestionGenInputConfig(BaseModel):
     """Configuration for question generation input dataset."""
@@ -312,7 +312,8 @@ def generate_questions(
         embedding_api_base=litellm_config.embedding_api_base,
         embedding_batch_size=config.question_generation.dedup_embedding_batch_size,
         llm_calls_per_minute=config.question_generation.llm_calls_per_minute,
-        embedding_calls_per_minute=config.question_generation.embedding_calls_per_minute
+        embedding_calls_per_minute=config.question_generation.embedding_calls_per_minute,
+        temperature=litellm_config.temperature
     )
     
     # Get unique texts and build a text-to-id mapping
