@@ -6,7 +6,7 @@ import uuid
 from pathlib import Path
 from typing import Any, Dict, List, Tuple
 
-from chunking import ChunkerRegistry
+from chunking.registry import ChunkerRegistry
 from hub_upload.dataset_pusher import DatasetPusher
 from prompts.question_generation import QUESTION_GENERATION_PROMPT
 from synth_dataset.question_generator import QuestionGenerator
@@ -248,9 +248,4 @@ def train_model(
     train_main(config, train_dataset=train_dataset, kb_dataset=kb_dataset)
 
 
-__all__ = [
-    "generate_questions",
-    "process_chunks",
-    "train_model",
-]
 

@@ -1,7 +1,8 @@
 import argparse
 import logging
 
-from pipeline import load_pipeline_config, run_pipeline
+from pipeline.config import load_pipeline_config
+from pipeline.pipeline import run_pipeline
 
 
 logger = logging.getLogger(__name__)

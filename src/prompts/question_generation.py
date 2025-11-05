@@ -49,5 +49,3 @@ Bad Questions:
 
 For the given user text, generate 4 questions following these requirements. Each question should focus on a different aspect of the text. Do not reference the excerpt."""
 
-__all__ = ["QUESTION_GENERATION_PROMPT"]
-
